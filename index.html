@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جدول الامتحانات</title>
+
+<!-- Font Cairo -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg,#e9f0ff,#f7f9fc);
+    margin:0;
+    padding:20px;
+    color:#333;
+}
+.container { max-width:900px; margin:auto; }
+h2 { text-align:center; margin-bottom:25px; color:#2a2a2a; font-weight:700; }
+
+/* اختيار الصف */
+select#gradeSelect {
+    width:100%;
+    padding:12px;
+    margin:12px 0 25px 0;
+    border-radius:12px;
+    border:none;
+    background: linear-gradient(135deg,#6b8cff,#3b5bff);
+    color:white;
+    font-weight:600;
+    font-size:16px;
+    cursor:pointer;
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    appearance:none;
+}
+select#gradeSelect option {
+    color:#333;
+    font-weight:400;
+}
+
+/* البطاقات */
+.card {
+    background:white;
+    padding:22px;
+    margin:15px 0;
+    border-radius:16px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+    transition:0.3s;
+}
+.card:hover { transform:translateY(-4px); box-shadow:0 6px 20px rgba(111,130,255,0.25);}
+.subject-box { display:flex; justify-content:space-between; align-items:center; }
+.subject-info { display:flex; flex-direction:column; }
+.subject-info span.desc { font-size:14px; color:#555; margin-top:5px; }
+.subject-info span.date { font-size:14px; color:#888; margin-top:2px; }
+
+/* زر التواصل */
+#contactBtn {
+    display:block;
+    width:100%;
+    text-align:center;
+    margin-top:25px;
+    padding:14px;
+    background: linear-gradient(135deg,#3b5bff,#6b8cff);
+    color:white;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.2s;
+}
+#contactBtn:hover { background: linear-gradient(135deg,#6b8cff,#3b5bff); }
+
+/* الصفحات */
+.page { display:none; }
+.page.active { display:block; }
+
+/* النماذج */
+input,textarea { width:100%; padding:12px; margin:8px 0; border-radius:10px; border:2px solid #dde3ff; font-size:15px; }
+textarea { height:130px; resize:none; }
+button.form-btn { width:100%; margin-top:15px; }
+
+/* زر رجوع */
+.back-btn { display:inline-block; background:#333; color:white; padding:10px 14px; border-radius:8px; text-decoration:none; margin-bottom:10px; }
+
+.footer { text-align:center; margin-top:40px; color:#777; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- الصفحة الرئيسية -->
+<div id="page-home" class="page active">
+    <h2><i class="fa-solid fa-calendar-days"></i> جدول الامتحانات</h2>
+    <label><i class="fa-solid fa-layer-group"></i> اختر الصف</label>
+    <select id="gradeSelect">
+        <option value="">-- اختر الصف --</option>
+        <option value="sixth">الصف السادس</option>
+        <option value="fifth">الصف الخامس</option>
+        <option value="fourth">الصف الرابع</option>
+    </select>
+
+    <div id="examList"></div>
+
+    <!-- زر التواصل -->
+    <button id="contactBtn" onclick="goTo('contact')"><i class="fa fa-comments"></i> تواصل مع الإدارة</button>
+</div>
+
+<!-- صفحة التواصل -->
+<div id="page-contact" class="page">
+    <a class="back-btn" onclick="goTo('home')"><i class="fa fa-arrow-right"></i> رجوع</a>
+    <h2><i class="fa-solid fa-paper-plane"></i> إرسال رسالة</h2>
+
+    <label>🔹 اسمك:</label>
+    <input type="text" id="student_name" placeholder="مثال: أحمد علي">
+
+    <label>🔹 أدخل ID التليجرام الخاص بك:</label>
+    <input type="number" id="tg_id" placeholder="مثال: 123456789">
+
+    <label>✏️ اكتب رسالتك:</label>
+    <textarea id="msg"></textarea>
+
+    <label>📎 إرفاق صورة (اختياري):</label>
+    <input type="file" id="imgFile">
+
+    <button class="form-btn" onclick="sendToBot()"><i class="fa fa-paper-plane"></i> إرسال</button>
+    <p id="sendStatus" style="text-align:center; margin-top:10px;"></p>
+</div>
+
+</div>
+
+<div class="footer">
+    <p>© منصة جدول الامتحانات</p>
+</div>
+
+<script>
+// قراءة JSON خارجي
+let examsData = {};
+fetch("http://kokydwz.atwebpages.com/exmas/exams.json")
+  .then(res => res.json())
+  .then(data => examsData = data);
+
+// عرض الامتحانات حسب الصف
+document.getElementById("gradeSelect").addEventListener("change", ()=>{
+    let grade=document.getElementById("gradeSelect").value;
+    let box=document.getElementById("examList");
+    box.innerHTML="";
+    if(!grade || !examsData[grade]) return;
+    examsData[grade].forEach(ex=>{
+        box.innerHTML+=`
+        <div class="card">
+            <div class="subject-box">
+                <div class="subject-info">
+                    <h3><i class="fa ${ex.icon}" style="color:#3b5bff;"></i> ${ex.name}</h3>
+                    <span class="desc">${ex.desc}</span>
+                    <span class="date">${ex.day} - ${ex.date}</span>
+                </div>
+            </div>
+        </div>`;
+    });
+});
+
+// التنقل بين الصفحات
+function goTo(page){
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.getElementById("page-"+page).classList.add("active");
+}
+
+// إرسال رسالة للبوت
+async function sendToBot(){
+    const teacher_id = "7688384540"; // ID الذي تستقبل عليه الرسائل
+    const token="7519385180:AAE082W_w-AfjcMhcLqb9NfgqtK4q2IAHzc";
+    let student_name = document.getElementById("student_name").value;
+    let chat_id=document.getElementById("tg_id").value;
+    let message=document.getElementById("msg").value;
+    let status=document.getElementById("sendStatus");
+    let file=document.getElementById("imgFile").files[0];
+
+    if(!student_name || !chat_id){ alert("⚠ الرجاء إدخال الاسم وID التليجرام"); return; }
+
+    let text = `📩 رسالة من الطالب:\nالاسم: ${student_name}\nID: ${chat_id}\nالرسالة: ${message}`;
+
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({chat_id:teacher_id, text:text})
+    });
+
+    if(file){
+        const formData=new FormData();
+        formData.append("chat_id",teacher_id);
+        formData.append("photo",file);
+        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {method:"POST", body:formData});
+    }
+
+    status.innerHTML="✔ تم إرسال الرسالة بنجاح";
+    status.style.color="green";
+
+    // إعادة تعيين الحقول
+    document.getElementById("student_name").value="";
+    document.getElementById("tg_id").value="";
+    document.getElementById("msg").value="";
+    document.getElementById("imgFile").value="";
+}
+</script>
+</body>
+</html>
