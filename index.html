@@ -142,7 +142,7 @@ button.form-btn { width:100%; margin-top:15px; }
 <script>
 // قراءة JSON خارجي
 let examsData = {};
-fetch("http://kokydwz.atwebpages.com/exmas/exams.json")
+fetch("exams.json")
   .then(res => res.json())
   .then(data => examsData = data);
 
