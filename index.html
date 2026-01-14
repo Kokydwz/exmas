@@ -78,7 +78,7 @@ const examList = document.getElementById("examList");
 let examsData = {};
 
 // تحميل JSON
-fetch("http://kokydwz.atwebpages.com/exmas/exams.json")
+fetch("exams.json")
   .then(res => {
     if(!res.ok) throw new Error("لم يتم العثور على الملف exams.json");
     return res.json();
